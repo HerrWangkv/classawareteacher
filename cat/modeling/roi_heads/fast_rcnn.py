@@ -528,7 +528,7 @@ class FastRCNNOutputLayers(nn.Module):
                 w[m_incorrect]=ci[idx_incorrect[0],idx_incorrect[0]].to(w.device)
             else:
                 w[m_incorrect]=ci[idx_incorrect[0],idx_incorrect[1]].to(w.device)
-            w_c = torch.concat((w[m_correct],w[m_incorrect]))
+            w_c = torch.cat((w[m_correct],w[m_incorrect]))
    
             mean_w = torch.mean(w_c)
             if mean_w == 0:
@@ -544,10 +544,11 @@ class FastRCNNOutputLayers(nn.Module):
             if torch.any(torch.isnan(w)):
                 w[torch.isnan(w)] = 0.0
 
-
+        loss_cls = torch.sum(-torch.log_softmax(scores, dim=1) * gt_oht_classes, dim=1) * w
+        loss_cls = torch.mean(loss_cls)
         losses = {
             #"loss_cls": cross_entropy(scores, gt_classes, reduction="mean"),
-            "loss_cls": torch.mean(cross_entropy(scores, gt_oht_classes, reduction="none")*w), #cross_entropy(scores, gt_oht_classes, reduction="mean"),
+            "loss_cls": loss_cls,#torch.mean(cross_entropy(scores, gt_oht_classes, reduction="none")*w), #cross_entropy(scores, gt_oht_classes, reduction="mean"),
             "loss_box_reg": self.box_reg_loss(
                 proposal_boxes, gt_boxes, proposal_deltas, gt_classes, box_losses_w
             ),
